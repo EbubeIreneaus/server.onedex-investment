@@ -57,6 +57,8 @@ def createInvestFun(**data):
         user = User.objects.get(id=userId)
         end_date = datetime.datetime.now() + datetime.timedelta(hours=plans[data['plan']]['duration'])
         account = Account.objects.get(user__id = userId)
+        if account.balance < data['amount']:
+            return {'status': 'failed', 'code': 'insufficient balance, please fund your wallet'}
         account.active_investment += data['amount']
         account.save()
         order = Investment.objects.create(orderId=orderId, user=user, end_date=end_date, **data)
@@ -74,11 +76,13 @@ def createWithdrawFun(**data):
     try:
         user = User.objects.get(id=userId)
         account = Account.objects.get(user__id=userId)
+        if account.balance < data['amount']:
+            return {'status': 'failed', 'code': "insufficient wallet balance"}
         account.pending_withdraw += data['amount']
         account.save()
         order = Order.objects.create(orderId=orderId, user=user, type="withdraw", **data)
         return order.orderId
     except User.DoesNotExist:
-        return "user does not exist"
+        return {'status':'failed', 'code':"user does not exist"}
     except Exception as e:
         return str(e)
