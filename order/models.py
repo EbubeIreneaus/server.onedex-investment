@@ -68,3 +68,4 @@ class Investment(models.Model):
 
     def __str__(self):
         return f'{self.orderId} {self.plan}'
+    

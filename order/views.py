@@ -3,8 +3,10 @@ from .models import Order, Investment
 import string
 import random
 import datetime
+from django.utils import timezone
 from account.models import Account
 from django.db import transaction
+from decimal import Decimal
 
 
 # Create your views here.
@@ -27,6 +29,32 @@ def generateInvestmentId(length = 7):
         return id
     except Exception as e:
         return Exception(message=e)
+
+@transaction.atomic
+def update_all_investment(userId):
+    invplan = {'bronze':0.2,'silver':0.4,'gold':0.6,'vip':0.8}
+    now = timezone.now()
+    try:
+        account = Account.objects.get(user__id = userId)
+        investment = Investment.objects.filter(user__id = userId, status = 'ongoing')
+
+        #loop through all investments and get which date is due
+        for inv in investment:
+            if inv.end_date <= now:
+                amount = inv.amount
+                plan = inv.plan
+                roi = Decimal(invplan[plan]) * amount
+                inv.status = 'completed'
+                account.balance += roi + amount
+                account.active_investment -= amount
+                account.total_earnings += roi
+                inv.save()
+                account.save()
+    
+        return True
+    except Exception as e:
+        print(f"error updating transaction: {e}")
+
 
 def createDepositFun(**data):
     orderId = generateOrderId()
@@ -59,6 +87,7 @@ def createInvestFun(**data):
         account = Account.objects.get(user__id = userId)
         if account.balance < data['amount']:
             return {'status': 'failed', 'code': 'insufficient balance, please fund your wallet'}
+        account.balance -= data['amount']
         account.active_investment += data['amount']
         account.save()
         order = Investment.objects.create(orderId=orderId, user=user, end_date=end_date, **data)

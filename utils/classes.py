@@ -41,4 +41,10 @@ class OrderOut(Schema):
     type: str
     status: str
     amount: int
-    channel: str
+    channel: str | None
+
+class InvestmentOut(Schema):
+    orderId: str
+    plan: str
+    status: str
+    amount: int
