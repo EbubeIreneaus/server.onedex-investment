@@ -105,8 +105,8 @@ def createWithdrawFun(**data):
     try:
         user = User.objects.get(id=userId)
         account = Account.objects.get(user__id=userId)
-        if account.balance < data['amount']:
-            return {'status': 'failed', 'code': "insufficient wallet balance"}
+        if account.total_earnings < data['amount']:
+            return {'status': 'failed', 'code': "insufficient wallet earnings!!"}
         account.pending_withdraw += data['amount']
         account.save()
         order = Order.objects.create(orderId=orderId, user=user, type="withdraw", **data)

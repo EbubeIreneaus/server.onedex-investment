@@ -24,7 +24,7 @@ def handle_order_signal(old_data, new_data):
             
             #if type is withdraw
             if type == "withdraw":
-                account.balance -= amount
+                account.total_earnings -= amount
                 account.pending_withdraw -= amount
                 account.save()
 
