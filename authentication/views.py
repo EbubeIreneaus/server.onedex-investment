@@ -1018,6 +1018,9 @@ def Login(**data):
             send_verify_otp = send_otp_code(id=user.id, label="ONEDEX Account Verification")
             return {'status': 'unverified', 'userId': user.id}
         
+        if user.isSuspended:
+            return {'status': 'suspended', 'userId': user.id}
+        
         return {'status': 'success', 'userId': user.id}
     except Exception as e:
 

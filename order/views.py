@@ -36,7 +36,7 @@ def update_all_investment(userId):
     now = timezone.now()
     try:
         account = Account.objects.get(user__id = userId)
-        investment = Investment.objects.filter(user__id = userId, status = 'ongoing')
+        investment = Investment.objects.filter(user__id = userId, user__isSuspended = False, status = 'ongoing')
 
         #loop through all investments and get which date is due
         for inv in investment:

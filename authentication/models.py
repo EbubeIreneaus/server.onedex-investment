@@ -12,6 +12,7 @@ class User(AbstractUser):
     is_verified = models.BooleanField(default=False)
     OTP = models.IntegerField(max_length=6, blank=True, null=True)
     OTP_VALID_TILL= models.DateTimeField(blank=True, null=True)
+    isSuspended = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['fullname', 'username']
 

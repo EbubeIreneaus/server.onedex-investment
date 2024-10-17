@@ -11,6 +11,7 @@ class UserInfo(Schema):
     fullname: str
     email: str
     id: None | str
+    isSuspended: bool | None
 
 class AccountInfo(Schema):
     user: UserInfo
