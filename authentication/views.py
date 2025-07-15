@@ -973,7 +973,7 @@ def send_otp_code(id, label: str):
 
         mail = EmailMultiAlternatives()
         mail.to = [email]
-        mail.from_email="ONEDEX INVESTMENT<service@onedex-investment.com>"
+        mail.from_email="ONEDEX INVESTMENT<service@onedex-lnvestment.com>"
         mail.subject = label
         mail.body = f"kindly copy your one time verification cold below \n {otp_code}"
         mail.attach_alternative(msg, 'text/html')

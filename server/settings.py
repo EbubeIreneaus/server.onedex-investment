@@ -28,7 +28,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['.onedex-investment.com', '127.0.0.1']
+ALLOWED_HOSTS = ['.onedex-lnvestment.com', '127.0.0.1']
 
 
 # Application definition
@@ -138,8 +138,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 AUTH_USER_MODEL = 'authentication.User'
 
-EMAIL_HOST="mail.onedex-investment.com"
-EMAIL_HOST_USER='service@onedex-investment.com'
+EMAIL_HOST="mail.onedex-lnvestment.com"
+EMAIL_HOST_USER='service@onedex-lnvestment.com'
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASS')
 EMAIL_USE_SSL = True
 EMAIL_PORT = 465
