@@ -2,3 +2,4 @@ venv/
 server/.env
 index/
 .zip
+server.zip
