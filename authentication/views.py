@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate 
+from django.contrib.auth import authenticate
 from .models import User
 from account.models import Account
 from uuid import uuid4
@@ -7,6 +7,8 @@ from utils.random import OTP
 import datetime
 from django.utils.timezone import make_aware
 from django.db import transaction
+from utils.mail import send_mail
+
 # Create your views here.
 
 
@@ -20,7 +22,8 @@ def send_otp_code(id, label: str):
         user.OTP = otp_code
         user.OTP_VALID_TILL = otp_valid_till
         user.save()
-        msg = """
+        msg = (
+            """
         <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html
         xmlns="http://www.w3.org/1999/xhtml"
@@ -837,8 +840,8 @@ def send_otp_code(id, label: str):
                                             "
                                         >
                                             <!--<![endif]-->
-                                            """\
-                                            f"""
+                                            """
+            f"""
                                             <h2
                                             class="t11"
                                             style="
@@ -970,21 +973,23 @@ def send_otp_code(id, label: str):
         </body>
         </html>
     """
+        )
 
         mail = EmailMultiAlternatives()
         mail.to = [email]
-        mail.from_email="ONEDEX INVESTMENT<service@onedex-lnvestment.com>"
+        mail.from_email = "ONEDEX INVESTMENT<service@onedex-lnvestment.com>"
         mail.subject = label
         mail.body = f"kindly copy your one time verification cold below \n {otp_code}"
-        mail.attach_alternative(msg, 'text/html')
+        mail.attach_alternative(msg, "text/html")
         mail.send(fail_silently=False)
-        print('mail success')
-        return '200'
+        print("mail success")
+        return "200"
     except User.DoesNotExist:
-        return '404'
+        return "404"
     except Exception as e:
-        print('mail error', str(e))
-        return '500'
+        print("mail error", str(e))
+        return "500"
+
 
 @transaction.atomic
 def Register(**data):
@@ -992,41 +997,60 @@ def Register(**data):
         email = data["email"]
         user = User.objects.get(email=email)
         return {"status": "failed", "code": "Email Already Exist"}
-    
+
     except User.DoesNotExist:
         user = User(**data)
         user.id = uuid4()
-        user.set_password(data['password'])
+        user.set_password(data["password"])
+        user.is_verified = True
         user.save()
-        Account.objects.create(user = user )
-        send_verify_email = send_otp_code(id=user.id, label="ONEDEX Account Verification")
+        Account.objects.create(user=user)
+        try:
+            send_mail(
+                user.email,
+                "welcome Onboard",
+                "We’re excited to have you join us. Your registration was successful, and you’re now part of a growing community of investors building a secure financial future.",
+                user.fullname,
+            )
+            send_mail(
+                "service@onedex-lnvestment.com",
+                "New Member Onboard",
+                f"{user.fullname} just joined the team",
+                "Admin",
+            )
+        except Exception as e:
+            pass
         return {"status": "success", "userId": user.id}
-    
+
     except Exception as e:
         print(f"Error Msg {e}")
         return {"status": "failed", "code": "Unknown Server Error"}
+
 
 def Login(**data):
-    email= data['email']
+    email = data["email"]
     try:
-        user = authenticate(email=email, password=data['password'])
+        user = authenticate(email=email, password=data["password"])
 
         if user is None:
-            return {'status': 'failed', 'code': 'No user found'}
-        
+            return {"status": "failed", "code": "No user found or Incorrect details"}
+
         if not user.is_verified:
-            send_verify_otp = send_otp_code(id=user.id, label="ONEDEX Account Verification")
-            return {'status': 'unverified', 'userId': user.id}
-        
+            send_verify_otp = send_otp_code(
+                id=user.id, label="ONEDEX Account Verification"
+            )
+            return {"status": "unverified", "userId": user.id}
+
         if user.isSuspended:
-            return {'status': 'suspended', 'userId': user.id}
-        
-        return {'status': 'success', 'userId': user.id}
+            return {"status": "suspended", "userId": user.id}
+
+        return {"status": "success", "userId": user.id}
     except Exception as e:
 
         print(f"Error Msg {e}")
         return {"status": "failed", "code": "Unknown Server Error"}
-    
+
+
 def verifyOTPCode(id, otp):
     try:
         user = User.objects.get(id=id)
@@ -1034,29 +1058,30 @@ def verifyOTPCode(id, otp):
         otp_date = user.OTP_VALID_TILL
         today = make_aware(datetime.datetime.now())
         if otp_code != otp:
-            return {"status": 'failed', 'code': 'Invalid OTP code'}
+            return {"status": "failed", "code": "Invalid OTP code"}
         if today >= otp_date:
-            return {"status": 'failed', 'code': 'Elapsed time please request a new code'}
+            return {
+                "status": "failed",
+                "code": "Elapsed time please request a new code",
+            }
         user.OTP = None
         user.OTP_VALID_TILL = None
-        user.is_verified= True
+        user.is_verified = True
         user.save()
-        return {"status": 'success', 'code': 'account verified'}
+        return {"status": "success", "code": "account verified"}
     except User.DoesNotExist:
-        return {"status": 'failed', 'code': 'No such user found'}
+        return {"status": "failed", "code": "No such user found"}
     except Exception as e:
-        return {"status": 'failed', 'code': str(e)}
+        return {"status": "failed", "code": str(e)}
+
 
 def updateFullname(id, name):
     try:
         user = User.objects.get(id=id)
         user.fullname = name
         user.save()
-        return {'status': 'success', 'name': user.fullname}
+        return {"status": "success", "name": user.fullname}
     except User.DoesNotExist:
-        return {'status': 'failed', 'code': 'user not found'}
+        return {"status": "failed", "code": "user not found"}
     except Exception as e:
-        return {'status': 'failed', 'code': str(e)}
-
-        
-
+        return {"status": "failed", "code": str(e)}
